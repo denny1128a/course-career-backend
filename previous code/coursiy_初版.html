@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>選課與生涯建議系統</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+    select, button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #0078D4;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    select {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+    .response {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>請選擇科系並輸入你的問題</h2>
+
+    <!-- 科系選擇 -->
+    <select id="department">
+      <option value="computer_science">資訊工程學系</option>
+      <option value="electrical_engineering">電機工程學系</option>
+      <option value="mechanical_engineering">機械工程學系</option>
+      <option value="civil_engineering">土木工程學系</option>
+      <option value="business_administration">企業管理學系</option>
+      <!-- 可以在這裡增加更多科系 -->
+    </select>
+
+    <!-- 問題輸入 -->
+    <textarea id="question" placeholder="例如：我想轉系到資工，但我數學不好，該怎麼準備？"></textarea>
+    <button id="submit-btn" onclick="submitQuestion()">送出</button>
+
+    <!-- 顯示回應 -->
+    <div class="response" id="response"></div>
+  </div>
+
+  <script>
+    let isCoolingDown = false; // 防呆機制：按鈕冷卻狀態
+
+    async function submitQuestion() {
+      const department = document.getElementById('department').value; // 取得科系選擇
+      const question = document.getElementById('question').value;
+      const responseDiv = document.getElementById('response');
+      const submitButton = document.getElementById('submit-btn');
+
+      if (isCoolingDown) {
+        responseDiv.innerText = '請稍後再試...';
+        return;
+      }
+
+      responseDiv.innerText = '正在分析中...';
+      submitButton.disabled = true; // 禁用送出按鈕
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, department })
+        });
+
+        const data = await res.json();
+        if (data.answer) {
+          responseDiv.innerText = data.answer;
+        } else {
+          responseDiv.innerText = '伺服器沒有回應建議';
+        }
+      } catch (err) {
+        console.error(err);
+        responseDiv.innerText = '發生錯誤，請稍後再試';
+      } finally {
+        submitButton.disabled = false; // 恢復按鈕
+      }
+    }
+  </script>
+</body>
+</html>

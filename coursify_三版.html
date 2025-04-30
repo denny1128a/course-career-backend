@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>coursify</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f7fa;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .container, .result-container {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    .active {
+      display: block;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 16px;
+      display: block;
+      color: #34495e;
+    }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    .response-box {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ecfdf5;
+      border-left: 6px solid #2ecc71;
+      border-radius: 12px;
+    }
+
+    .flex-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .flex-child {
+      flex: 1;
+      min-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <h1>智慧選課與生涯建議系統</h1>
+
+  <!-- 輸入頁 -->
+  <div class="container active" id="inputPage">
+    <label for="department">主修學系：</label>
+    <select id="department">
+      <option value="">-- 請選擇 --</option>
+      <option value="資訊工程學系">資訊工程學系</option>
+      <option value="電機工程學系">電機工程學系</option>
+      <option value="企業管理學系">企業管理學系</option>
+      <option value="通訊工程學系">通訊工程學系</option>
+      <option value="其他">其他</option>
+    </select>
+
+    <label for="grade">年級：</label>
+    <select id="grade">
+      <option value="">-- 請選擇 --</option>
+      <option value="一年級">一年級</option>
+      <option value="二年級">二年級</option>
+      <option value="三年級">三年級</option>
+      <option value="四年級">四年級</option>
+      <option value="研究生">研究生</option>
+    </select>
+
+    <label for="takenCourses">已修課程：</label>
+    <input type="text" id="takenCourses" placeholder="例如：程式設計、線性代數...">
+
+    <label for="studentQuestion">補充說明 / 問題描述：</label>
+    <textarea id="studentQuestion" placeholder="我對資料分析有興趣，想知道要補哪些能力..."></textarea>
+
+    <button onclick="submitForm()">COURSIFY!</button>
+  </div>
+
+  <!-- 結果頁 -->
+  <div class="result-container" id="resultPage">
+    <h2>建議結果</h2>
+    <div class="flex-container">
+      <div class="flex-child">
+        <h3>您的輸入：</h3>
+        <p id="summary"></p>
+      </div>
+      <div class="flex-child">
+        <h3>AI 建議回覆：</h3>
+        <div class="response-box" id="aiAdvice">正在生成建議...</div>
+
+        <label for="followup">進一步詢問：</label>
+        <textarea id="followup" placeholder="你剛提到 XXX，請問要怎麼做..."></textarea>
+        <button onclick="goBack()">回到首頁</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showPage(id) {
+      document.querySelectorAll('.container, .result-container').forEach(e => e.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    async function submitForm() {
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+      const question = document.getElementById('studentQuestion').value;
+
+      // 顯示結果頁，暫時放入用戶輸入
+      document.getElementById('summary').innerText =
+        `主修：${dept}\n年級：${grade}\n已修課程：${taken}\n補充說明：${question}`;
+
+      showPage('resultPage');
+
+      try {
+        const response = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ department: dept, grade: grade, takenCourses: taken, question: question })
+        });
+
+        const data = await response.json();
+        document.getElementById('aiAdvice').innerText = data.answer;
+
+      } catch (error) {
+        console.error(error);
+        document.getElementById('aiAdvice').innerText = '無法取得建議，請稍後再試。';
+      }
+    }
+
+    function goBack() {
+      document.getElementById('followup').value = '';
+      showPage('inputPage');
+    }
+  </script>
+</body>
+</html>

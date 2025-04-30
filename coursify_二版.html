@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>coursify</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f7fa;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .chat-container {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 16px;
+      display: block;
+      color: #34495e;
+    }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    .response {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #ecfdf5;
+      border-left: 6px solid #2ecc71;
+      border-radius: 12px;
+      display: none;
+    }
+
+    .response h3 {
+      margin-top: 0;
+      color: #2c7a7b;
+    }
+
+    .loading {
+      color: #888;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>智慧選課與生涯建議系統</h1>
+  <div class="chat-container">
+    
+    <label for="department">主修學系：</label>
+    <select id="department">
+      <option value="">-- 請選擇 --</option>
+      <option value="資訊工程學系">資訊工程學系</option>
+      <option value="電機工程學系">電機工程學系</option>
+      <option value="企業管理學系">企業管理學系</option>
+      <option value="通訊工程學系">通訊工程學系</option>
+      <option value="其他">其他</option>
+    </select>
+
+    <label for="grade">年級：</label>
+    <select id="grade">
+      <option value="">-- 請選擇 --</option>
+      <option value="一年級">一年級</option>
+      <option value="二年級">二年級</option>
+      <option value="三年級">三年級</option>
+      <option value="四年級">四年級</option>
+      <option value="研究生">研究生</option>
+    </select>
+
+    <label for="takenCourses">已修課程：</label>
+    <input type="text" id="takenCourses" placeholder="例如：程式設計、線性代數...">
+
+    <label for="studentQuestion">補充說明 / 問題描述：</label>
+    <textarea id="studentQuestion" placeholder="我對資料分析有興趣，想知道要補哪些能力..."></textarea>
+
+    <button onclick="getSuggestion()">送出問題</button>
+
+    <div id="responseArea" class="response">
+      <h3>AI建議回覆</h3>
+      <p id="aiAdvice" class="loading">請稍候...</p>
+    </div>
+  </div>
+
+  <script>
+    async function getSuggestion() {
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+      const question = document.getElementById('studentQuestion').value;
+
+      const adviceBox = document.getElementById('responseArea');
+      const adviceText = document.getElementById('aiAdvice');
+      
+      // 顯示回覆區塊與loading文字
+      adviceBox.style.display = 'block';
+      adviceText.innerText = '正在生成建議中，請稍候...';
+
+      try {
+        // 模擬 API 呼叫，未來可改為你自己的後端路徑
+        const response = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: question
+          })
+        });
+
+        const data = await response.json();
+
+        // 假設後端會回傳格式：{ "advice": "你應該修... 並考慮往 XXX 發展..." }
+        adviceText.innerText = data.answer;  // 顯示後端回覆的建議
+
+      } catch (error) {
+        console.error(error);
+        adviceText.innerText = '發生錯誤，無法取得建議。請稍後再試。';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Coursify</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f8;
+      padding: 40px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .chat-container {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    textarea {
+      width: 95%;
+      height: 120px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #a8a8a8;
+      resize: none;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 12px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    .response {
+      margin-top: 20px;
+      background-color: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <h1>智慧選課與生涯建議系統</h1>
+  <div class="chat-container">
+    <label for="studentQuestion">請描述你的問題或需求：</label>
+    <textarea id="studentQuestion" placeholder="例如：我對AI有興趣，但不知道該選哪些課..."></textarea>
+    <button onclick="getSuggestion()">送出問題</button>
+    <div id="responseArea" class="response" style="display:none;"></div>
+  </div>
+
+  <script>
+    function getSuggestion() {
+      const question = document.getElementById('studentQuestion').value;
+      const responseArea = document.getElementById('responseArea');
+
+      // 模擬建議回答（未來會改為串接API）
+      const simulatedResponse = `您好！根據您輸入的問題：
+「${question}」
+這裡是我為您提供的初步建議：
+- 若您對AI有興趣，建議可以修習「機器學習」、「人工智慧導論」等課程。
+- 同時可參加學校的AI相關研究或社團，以增加實作經驗。
+- 生涯方向方面，可考慮未來從事資料科學、AI工程師等職位。
+
+若需要更詳細的建議，也可以補充您目前的科系與興趣唷～`;
+
+      responseArea.style.display = 'block';
+      responseArea.innerText = simulatedResponse;
+    }
+  </script>
+</body>
+</html>

@@ -1,70 +1,72 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
 
-let isCoolingDown = false;
-
-app.post('/ask', async (req, res) => {
-  if (isCoolingDown) {
-    return res.status(429).json({ error: '請稍後再試' });
-  }
-
-  const { department, grade, takenCourses, question } = req.body;
-
-  const prompt = `
-你是大學課程與職涯顧問，請根據以下學生資料給出實用建議：
-主修學系：${department}
-年級：${grade}
-已修課程：${takenCourses}
-學生問題：${question}
-請回覆包含建議修哪些課、還缺乏哪些技能，以及未來發展方向建議。
-`;
-
-  console.log('🔥 傳送的 prompt:', prompt);
-
-  try {
-    const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model: process.env.OPENROUTER_MODEL,
-        messages: [
-          { role: 'system', content: '你是智慧選課與職涯建議系統的AI顧問。' },
-          { role: 'user', content: prompt }
-        ]
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'http://localhost:3000',
-          'X-Title': 'CourseCareerAdvisor'
-        }
-      }
-    );
-
-    const answer = response.data.choices[0].message.content;
-    res.json({ answer });
-
-  } catch (error) {
-    if (error.response && error.response.status === 429) {
-      isCoolingDown = true;
-      setTimeout(() => {
-        isCoolingDown = false;
-      }, 30000);
-    }
-
-    console.error('❌ OpenRouter 錯誤:', error.response?.data || error.message);
-    res.status(500).json({ error: 'API 錯誤，請稍後再試。' });
+// 建立 SQLite 資料庫連線
+const db = new sqlite3.Database('./courses.db', sqlite3.OPEN_READONLY, (err) => {
+  if (err) {
+    console.error('❌ 無法連接資料庫:', err.message);
+  } else {
+    console.log('✅ 已連接至課程資料庫');
   }
 });
+
+// AI API 呼叫函式
+async function askAI(prompt) {
+  const response = await axios.post(
+    'https://openrouter.ai/api/v1/chat/completions',
+    {
+      model: 'openai/gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: '你是智慧選課與職涯建議系統的AI顧問。' },
+        { role: 'user', content: prompt }
+      ]
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      }
+    }
+  );
+  return response.data.choices[0].message.content;
+}
+
+// 課程推薦 API
+app.post('/recommend', (req, res) => {
+    const { course_code, course_name } = req.body;
+  
+    if (!course_code || !course_name) {
+      return res.status(400).json({ error: '缺少必要參數 course_code 或 course_name' });
+    }
+  
+    const query = `
+      SELECT * FROM courses 
+      WHERE course_code LIKE ? AND course_name LIKE ?;
+    `;
+  
+    db.all(query, [`%${course_code}%`, `%${course_name}%`], (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+  
+      if (rows.length === 0) {
+        return res.json({ message: '沒有找到符合條件的課程' });
+      }
+  
+      return res.json(rows);
+    });
+  });
+  
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+//此為server05，只能用來查詢串接課程資訊，甚至無法連結前端

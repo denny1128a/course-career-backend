@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>coursify</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f7fa;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .chat-container {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 16px;
+      display: block;
+      color: #34495e;
+    }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    .response {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #ecfdf5;
+      border-left: 6px solid #2ecc71;
+      border-radius: 12px;
+      display: none;
+    }
+
+    .response h3 {
+      margin-top: 0;
+      color: #2c7a7b;
+    }
+
+    .loading {
+      color: #888;
+      font-style: italic;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .follow-up-container {
+      margin-top: 30px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .follow-up-container textarea {
+      margin-top: 10px;
+      resize: none;
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h1>智慧選課與生涯建議系統</h1>
+  <div class="chat-container" id="initialPage">
+    <label for="department">主修學系：</label>
+    <select id="department">
+      <option value="">-- 請選擇 --</option>
+      <option value="資訊工程學系">資訊工程學系</option>
+      <option value="電機工程學系">電機工程學系</option>
+      <option value="企業管理學系">企業管理學系</option>
+      <option value="通訊工程學系">通訊工程學系</option>
+      <option value="其他">其他</option>
+    </select>
+
+    <label for="grade">年級：</label>
+    <select id="grade">
+      <option value="">-- 請選擇 --</option>
+      <option value="一年級">一年級</option>
+      <option value="二年級">二年級</option>
+      <option value="三年級">三年級</option>
+      <option value="四年級">四年級</option>
+      <option value="研究生">研究生</option>
+    </select>
+
+    <label for="takenCourses">已修課程：</label>
+    <input type="text" id="takenCourses" placeholder="例如：程式設計、線性代數...">
+
+    <label for="studentQuestion">補充說明 / 問題描述：</label>
+    <textarea id="studentQuestion" placeholder="我對資料分析有興趣，想知道要補哪些能力..."></textarea>
+
+    <button onclick="getSuggestion()">送出問題</button>
+
+    <div id="errorMessage" class="error-message" style="display:none;">
+      發生錯誤，無法處理進一步問題。請稍後再試。
+    </div>
+  </div>
+
+  <div class="chat-container" id="responsePage" style="display:none;">
+    <h3>您的資料與AI建議</h3>
+    <div>
+      <p><strong>主修學系：</strong><span id="displayDepartment"></span></p>
+      <p><strong>年級：</strong><span id="displayGrade"></span></p>
+      <p><strong>已修課程：</strong><span id="displayTakenCourses"></span></p>
+      <p><strong>學生問題：</strong><span id="displayStudentQuestion"></span></p>
+    </div>
+    
+    <div id="responseArea" class="response">
+      <h3>AI建議回覆</h3>
+      <p id="aiAdvice" class="loading">請稍候...</p>
+    </div>
+
+    <div class="follow-up-container">
+      <label for="followUpQuestion">進一步詢問：</label>
+      <textarea id="followUpQuestion" placeholder="輸入您的進一步問題..."></textarea>
+      <button onclick="sendFollowUp()">送出進一步問題</button>
+      <button onclick="goBackToHome()">回到首頁</button>
+    </div>
+  </div>
+
+  <script>
+    let initialData = {};
+
+    async function getSuggestion() {
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+      const question = document.getElementById('studentQuestion').value;
+
+      initialData = { dept, grade, taken, question };
+
+      const adviceBox = document.getElementById('responseArea');
+      const adviceText = document.getElementById('aiAdvice');
+      const errorMessage = document.getElementById('errorMessage');
+
+      // 顯示回覆區塊與loading文字
+      adviceBox.style.display = 'block';
+      adviceText.innerText = '正在生成建議中，請稍候...';
+      errorMessage.style.display = 'none';  // 隱藏錯誤訊息
+
+      try {
+        // 模擬 API 呼叫，未來可改為你自己的後端路徑
+        const response = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: question
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // 顯示使用者輸入的資料與AI建議
+        document.getElementById('displayDepartment').innerText = dept;
+        document.getElementById('displayGrade').innerText = grade;
+        document.getElementById('displayTakenCourses').innerText = taken;
+        document.getElementById('displayStudentQuestion').innerText = question;
+        
+        adviceText.innerText = data.answer;
+
+        // 切換頁面顯示
+        document.getElementById('initialPage').style.display = 'none';
+        document.getElementById('responsePage').style.display = 'block';
+
+      } catch (error) {
+        console.error(error);
+        errorMessage.style.display = 'block';  // 顯示錯誤訊息
+        adviceBox.style.display = 'none';      // 隱藏建議區塊
+      }
+    }
+
+    async function sendFollowUp() {
+      const followUpQuestion = document.getElementById('followUpQuestion').value;
+
+      if (!followUpQuestion.trim()) {
+        alert('請輸入進一步問題。');
+        return;
+      }
+
+      const adviceBox = document.getElementById('responseArea');
+      const adviceText = document.getElementById('aiAdvice');
+      
+      // 顯示loading文字
+      adviceBox.style.display = 'block';
+      adviceText.innerText = '正在處理進一步問題...';
+
+      try {
+        // 合併初始資料與進一步問題
+        const response = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            department: initialData.dept,
+            grade: initialData.grade,
+            takenCourses: initialData.taken,
+            question: followUpQuestion
+          })
+        });
+
+        const data = await response.json();
+        adviceText.innerText = data.answer;
+
+      } catch (error) {
+        console.error(error);
+        adviceText.innerText = '發生錯誤，無法處理進一步問題。請稍後再試。';
+      }
+    }
+
+    function goBackToHome() {
+      document.getElementById('responsePage').style.display = 'none';
+      document.getElementById('initialPage').style.display = 'block';
+      document.getElementById('followUpQuestion').value = '';
+    }
+  </script>
+</body>
+</html>

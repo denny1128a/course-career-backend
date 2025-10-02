@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Coursify - 智慧選課與生涯建議</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Noto Sans TC', Arial, sans-serif;
+      background-color: #f4f7fa;
+      padding: 0;
+      max-width: 900px;
+      margin: 40px auto;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin: 0;
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    h3, h4 {
+      color: #2c7a7b;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 0 auto 30px auto;
+    }
+
+    .logo {
+      width: 150px;
+      height: 150px;
+      margin-right: 20px;
+    }
+
+    .chat-container {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: 500;
+      margin-top: 16px;
+      display: block;
+      color: #34495e;
+    }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+      font-family: 'Noto Sans TC', Arial, sans-serif;
+    }
+
+    select:focus, textarea:focus, input[type="text"]:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      position: relative;
+      font-family: 'Noto Sans TC', Arial, sans-serif;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    button.loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .response {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #ecfdf5;
+      border-left: 6px solid #2ecc71;
+      border-radius: 12px;
+    }
+
+    .career-advice {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e6f3ff;
+      border-left: 6px solid #3498db;
+      border-radius: 8px;
+    }
+
+    .career-advice h4 {
+      margin-top: 0;
+      color: #1e88e5;
+    }
+
+    .loading-text {
+      color: #888;
+      font-style: italic;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .visible {
+      display: block;
+    }
+
+    .followup-box {
+      background: #fdf6e3;
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 6px solid #f39c12;
+      border-radius: 12px;
+    }
+
+    .followup-response {
+      margin-top: 12px;
+      padding: 12px;
+      background-color: #f0f9ff;
+      border-left: 4px solid #3498db;
+      border-radius: 8px;
+    }
+
+    .course-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+      font-family: 'Noto Sans TC', Arial, sans-serif;
+    }
+
+    .course-table th, .course-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .course-table th {
+      background-color: #3498db;
+      color: white;
+      font-weight: 500;
+    }
+
+    .course-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .course-table tr:hover {
+      background-color: #e6f3ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-container">
+    <img src="logo1.png" alt="Coursify Logo" class="logo">
+    <h1>智慧選課與生涯建議系統</h1>
+  </div>
+
+  <!-- 頁面 1：輸入區 -->
+  <div id="page1" class="page visible chat-container">
+    <label for="department">主修學系：</label>
+    <select id="department">
+      <option value="">-- 請選擇 --</option>
+      <option value="資訊工程學系">資訊工程學系</option>
+      <option value="電機工程學系">電機工程學系</option>
+      <option value="企業管理學系">企業管理學系</option>
+      <option value="通訊工程學系">通訊工程學系</option>
+      <option value="其他">其他</option>
+    </select>
+
+    <label for="grade">年級：</label>
+    <select id="grade">
+      <option value="">-- 請選擇 --</option>
+      <option value="一年級">一年級</option>
+      <option value="二年級">二年級</option>
+      <option value="三年級">三年級</option>
+      <option value="四年級">四年級</option>
+      <option value="研究生">研究生</option>
+    </select>
+
+    <label for="takenCourses">已修課程：</label>
+    <input type="text" id="takenCourses" placeholder="例如：程式設計、線性代數...">
+
+    <label for="studentQuestion">補充說明 / 問題描述：</label>
+    <textarea id="studentQuestion" placeholder="我想學資料分析，推薦哪些課程？或我想成為數據工程師，該如何規劃？"></textarea>
+
+    <button id="submitBtn" onclick="submitInitial()">送出問題</button>
+
+    <p id="errorMsg" style="color:red; display:none;"></p>
+  </div>
+
+  <!-- 頁面 2：結果與追問 -->
+  <div id="page2" class="page chat-container">
+    <h3>使用者輸入資料：</h3>
+    <p id="userSummary"></p>
+
+    <div class="response">
+      <h3>AI建議回覆</h3>
+      <div id="aiAdvice" class="loading-text">載入中...</div>
+    </div>
+
+    <div class="followup-box">
+      <label for="followupInput">有其他想問的嗎？</label>
+      <textarea id="followupInput" placeholder="請輸入追問，例如：這些課程的先修要求是什麼？"></textarea>
+      <button id="followupBtn" onclick="sendFollowup()">提交追問</button>
+      <div id="followupResult" class="followup-response" style="display:none;"></div>
+    </div>
+
+    <button onclick="goHome()">回到首頁</button>
+  </div>
+
+  <script>
+    let originalQuestion = '';
+    let originalAnswer = '';
+
+    // [新增] 客戶端檢查問題相關性
+    function isQuestionRelevant(question) {
+      const keywords = [
+        '課程', '選課', '課', '學', '學習', '修', '職涯', '職業', '工作', 
+        '規劃', '建議', '推薦', '分析', '程式', '資料', '數據', '工程', 
+        '管理', '設計', '技能', '實習', '面試', '準備'
+      ];
+      const lowerQuestion = question.toLowerCase();
+      return keywords.some(keyword => lowerQuestion.includes(keyword));
+    }
+
+    function switchPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('visible'));
+      document.getElementById(pageId).classList.add('visible');
+    }
+
+    async function submitInitial() {
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+      const question = document.getElementById('studentQuestion').value;
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+
+      // [新增] 客戶端檢查問題相關性
+      if (!isQuestionRelevant(question)) {
+        errorMsg.innerText = '請問與課程或職涯相關的問題';
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        return;
+      }
+
+      if (!dept || !grade || !taken || !question) {
+        errorMsg.innerText = '請填寫所有必填欄位！';
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: question,
+            isFollowup: false
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          errorMsg.innerText = data.error || '發生錯誤，無法處理問題。請稍後再試。';
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+          return;
+        }
+
+        originalQuestion = question;
+        originalAnswer = JSON.stringify(data.response);
+
+        document.getElementById('userSummary').innerText =
+          `主修學系：${dept}\n年級：${grade}\n已修課程：${taken}\n補充說明：${question}`;
+        
+        document.getElementById('aiAdvice').innerHTML = `
+          <div class="career-advice">
+            <h4>${data.response.title || '職涯建議'}</h4>
+            ${Array.isArray(data.response.content) 
+              ? `<ul>${data.response.content.map(item => `<li>${item}</li>`).join('')}</ul>` 
+              : `<p>${data.response.content}</p>`}
+          </div>
+          ${data.courses?.length > 0 ? `
+            <h4>推薦課程</h4>
+            <table class="course-table">
+              <tr>
+                <th>課程名稱</th>
+                <th>課程內容</th>
+                <th>學分數</th>
+                <th>課程類型</th>
+                <th>推薦原因</th>
+              </tr>
+              ${data.courses.map(c => `
+                <tr>
+                  <td>${c.course_name}</td>
+                  <td>${c.description}</td>
+                  <td>${c.credits}</td>
+                  <td>${c.course_type}</td>
+                  <td>${c.reason}</td>
+                </tr>
+              `).join('')}
+            </table>
+          ` : ''}
+          ${data.message ? `<p>${data.message}</p>` : ''}
+        `;
+
+        switchPage('page2');
+      } catch (err) {
+        errorMsg.innerText = '網路錯誤，請檢查伺服器連線並稍後再試。';
+        errorMsg.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+      }
+    }
+
+    async function sendFollowup() {
+      const followupBtn = document.getElementById('followupBtn');
+      followupBtn.disabled = true;
+      followupBtn.classList.add('loading');
+
+      const followupInput = document.getElementById('followupInput').value;
+      const resultDiv = document.getElementById('followupResult');
+      const errorMsg = document.getElementById('errorMsg');
+      resultDiv.style.display = 'block';
+      resultDiv.innerText = 'AI 思考中...';
+      errorMsg.style.display = 'none';
+
+      // [新增] 客戶端檢查追問相關性
+      if (!isQuestionRelevant(followupInput)) {
+        resultDiv.innerText = '請問與課程或職涯相關的問題';
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+        return;
+      }
+
+      if (!originalAnswer) {
+        resultDiv.innerText = '請先提交初始問題，再進行追問！';
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+        return;
+      }
+      if (!followupInput) {
+        resultDiv.innerText = '請輸入追問內容！';
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+        return;
+      }
+
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: originalQuestion,
+            followupQuestion: followupInput,
+            previousAnswer: originalAnswer,
+            isFollowup: true
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          resultDiv.innerText = data.error || '發生錯誤，請稍後再試。';
+          followupBtn.disabled = false;
+          followupBtn.classList.remove('loading');
+          return;
+        }
+
+        // [改進] 追問顯示為自由格式（無課程表格）
+        resultDiv.innerHTML = `
+          <div class="career-advice">
+            <h4>${data.followupResult.title || '追問回應'}</h4>
+            ${Array.isArray(data.followupResult.content) 
+              ? `<ul>${data.followupResult.content.map(item => `<li>${item}</li>`).join('')}</ul>` 
+              : `<p>${data.followupResult.content}</p>`}
+          </div>
+        `;
+      } catch (err) {
+        resultDiv.innerText = '網路錯誤，請檢查伺服器連線並稍後再試。';
+      } finally {
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+      }
+    }
+
+    function goHome() {
+      document.getElementById('followupInput').value = '';
+      document.getElementById('followupResult').style.display = 'none';
+      document.getElementById('followupResult').innerText = '';
+      switchPage('page1');
+    }
+  </script>
+</body>
+</html>

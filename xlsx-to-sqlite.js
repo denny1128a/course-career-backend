@@ -1,17 +1,11 @@
 const xlsx = require('xlsx');
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
 
-// 讀取 Excel 檔案
-const workbook = xlsx.readFile('./courses1132.xlsx');
-const sheet = workbook.Sheets[workbook.SheetNames[0]];
-const jsonData = xlsx.utils.sheet_to_json(sheet);
-
-// 資料庫位置
+// [修改] 支援多個 Excel 文件輸入
+const excelFiles = ['./courses1132.xlsx', './courses1131.xlsx', './courses1121.xlsx','./courses1122.xlsx']; // 添加更多學年檔案
 const dbFile = './courses.db';
-if (fs.existsSync(dbFile)) fs.unlinkSync(dbFile);  // 若已存在則刪除
 
-// 開啟資料庫
+// 開啟資料庫（不刪除現有資料庫）
 const db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
   if (err) {
     console.error('⚠️ 無法打開資料庫:', err.message);
@@ -52,7 +46,8 @@ const createTableSQL = `
     flexible_teaching_en TEXT,
     course_field TEXT,
     core_competency_index INTEGER,
-    evaluation_method TEXT
+    evaluation_method TEXT,
+    UNIQUE(course_id, semester) -- [新增] 防止重複課程（同一學期）
   )
 `;
 
@@ -65,16 +60,17 @@ db.serialize(() => {
     }
     console.log('✅ 資料表 courses 創建成功');
 
-    // 清空資料表
-    db.run("DELETE FROM courses", (err) => {
-      if (err) {
-        console.error('⚠️ 清空資料表失敗:', err.message);
-      } else {
-        console.log('✅ 資料表已清空');
+    // [修改] 處理多個 Excel 文件
+    excelFiles.forEach((file) => {
+      try {
+        console.log(`📄 處理檔案: ${file}`);
+        const workbook = xlsx.readFile(file);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = xlsx.utils.sheet_to_json(sheet);
 
         // 準備插入資料
         const stmt = db.prepare(`
-          INSERT INTO courses (
+          INSERT OR IGNORE INTO courses (
             college, department, program, semester, course_id, course_code, class, course_name, 
             instructor, course_type, credits, office_hour, office_hour_en, course_goal_zh, 
             course_goal_en, course_content_zh, course_content_en, textbook_zh, textbook_en, 
@@ -119,15 +115,18 @@ db.serialize(() => {
         }
 
         stmt.finalize();
-        console.log('✅ 資料插入完成');
+        console.log(`✅ 檔案 ${file} 資料插入完成`);
+      } catch (err) {
+        console.error(`⚠️ 處理檔案 ${file} 失敗:`, err.message);
+      }
+    });
 
-        db.close((err) => {
-          if (err) {
-            console.error('⚠️ 關閉資料庫時發生錯誤:', err.message);
-          } else {
-            console.log('✅ 資料庫已關閉');
-          }
-        });
+    // 關閉資料庫
+    db.close((err) => {
+      if (err) {
+        console.error('⚠️ 關閉資料庫時發生錯誤:', err.message);
+      } else {
+        console.log('✅ 資料庫已關閉');
       }
     });
   });

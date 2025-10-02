@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>coursify</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f7fa;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .chat-container {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 16px;
+      display: block;
+      color: #34495e;
+    }
+
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    .response {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #ecfdf5;
+      border-left: 6px solid #2ecc71;
+      border-radius: 12px;
+    }
+
+    .response h3 {
+      margin-top: 0;
+      color: #2c7a7b;
+    }
+
+    .loading {
+      color: #888;
+      font-style: italic;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .visible {
+      display: block;
+    }
+
+    .followup-box {
+      background: #fdf6e3;
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 6px solid #f39c12;
+      border-radius: 12px;
+    }
+
+    .followup-response {
+      margin-top: 12px;
+      padding: 12px;
+      background-color: #f0f9ff;
+      border-left: 4px solid #3498db;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>智慧選課與生涯建議系統</h1>
+
+  <!-- 頁面 1：輸入區 -->
+  <div id="page1" class="page visible chat-container">
+    <label for="department">主修學系：</label>
+    <select id="department">
+      <option value="">-- 請選擇 --</option>
+      <option value="資訊工程學系">資訊工程學系</option>
+      <option value="電機工程學系">電機工程學系</option>
+      <option value="企業管理學系">企業管理學系</option>
+      <option value="通訊工程學系">通訊工程學系</option>
+      <option value="其他">其他</option>
+    </select>
+
+    <label for="grade">年級：</label>
+    <select id="grade">
+      <option value="">-- 請選擇 --</option>
+      <option value="一年級">一年級</option>
+      <option value="二年級">二年級</option>
+      <option value="三年級">三年級</option>
+      <option value="四年級">四年級</option>
+      <option value="研究生">研究生</option>
+    </select>
+
+    <label for="takenCourses">已修課程：</label>
+    <input type="text" id="takenCourses" placeholder="例如：程式設計、線性代數...">
+
+    <label for="studentQuestion">補充說明 / 問題描述：</label>
+    <textarea id="studentQuestion" placeholder="我對資料分析有興趣，想知道要補哪些能力..."></textarea>
+
+    <button onclick="submitInitial()">送出問題</button>
+
+    <p id="errorMsg" style="color:red; display:none;">發生錯誤，無法處理進一步問題。請稍後再試。</p>
+  </div>
+
+  <!-- 頁面 2：結果與追問 -->
+  <div id="page2" class="page chat-container">
+    <h3>使用者輸入資料：</h3>
+    <p id="userSummary"></p>
+
+    <div class="response">
+      <h3>AI建議回覆</h3>
+      <p id="aiAdvice" class="loading">載入中...</p>
+    </div>
+
+    <div class="followup-box">
+      <label for="followupInput">有其他想問的嗎？</label>
+      <textarea id="followupInput" placeholder="請輸入追問..."></textarea>
+      <button onclick="sendFollowup()">提交追問</button>
+      <div id="followupResult" class="followup-response" style="display:none;"></div>
+    </div>
+
+    <button onclick="goHome()">回到首頁</button>
+  </div>
+
+  <script>
+    let originalQuestion = '';
+    let originalAnswer = '';
+
+    function switchPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('visible'));
+      document.getElementById(pageId).classList.add('visible');
+    }
+
+    async function submitInitial() {
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+      const question = document.getElementById('studentQuestion').value;
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+
+      // [新增] 輸入驗證，防止空字段導致無效請求
+      if (!dept || !grade || !taken || !question) {
+        errorMsg.innerText = '請填寫所有必填欄位！';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: question,
+            isFollowup: false // [新增] 明確標記為初始問題
+          })
+        });
+
+        const data = await res.json();
+
+        // [修改] 檢查後端響應，防止 undefined
+        if (!res.ok || data.error) {
+          errorMsg.innerText = data.error || '發生錯誤，無法處理問題。請稍後再試。';
+          errorMsg.style.display = 'block';
+          return;
+        }
+
+        originalQuestion = question;
+        originalAnswer = data.response || '無 AI 建議'; // [新增] 後備值防止 undefined
+
+        document.getElementById('userSummary').innerText =
+          `主修學系：${dept}　年級：${grade}\n已修課程：${taken}\n補充說明：${question}`;
+        document.getElementById('aiAdvice').innerText = data.response || '無 AI 建議'; // [新增] 後備值
+
+        switchPage('page2');
+      } catch (err) {
+        // [修改] 改進錯誤訊息
+        errorMsg.innerText = '網路錯誤，請檢查伺服器連線並稍後再試。';
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    async function sendFollowup() {
+      const followupInput = document.getElementById('followupInput').value;
+      const resultDiv = document.getElementById('followupResult');
+      const errorMsg = document.getElementById('errorMsg');
+      resultDiv.style.display = 'block';
+      resultDiv.innerText = 'AI 思考中...';
+      errorMsg.style.display = 'none';
+
+      // [新增] 檢查是否有 previousAnswer 和追問內容
+      if (!originalAnswer) {
+        resultDiv.innerText = '請先提交初始問題，再進行追問！';
+        return;
+      }
+      if (!followupInput) {
+        resultDiv.innerText = '請輸入追問內容！';
+        return;
+      }
+
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: originalQuestion, // [修改] 傳遞原始問題
+            followupQuestion: followupInput, // [修改] 明確傳遞追問問題
+            previousAnswer: originalAnswer,
+            isFollowup: true // [新增] 明確標記為追問
+          })
+        });
+
+        const data = await res.json();
+
+        // [修改] 檢查後端響應，確保 followupResult 存在
+        if (!res.ok || data.error) {
+          resultDiv.innerText = data.error || '發生錯誤，請稍後再試。';
+          return;
+        }
+
+        resultDiv.innerText = data.followupResult || 'AI 未提供追問回應，請再試一次。'; // [新增] 後備值
+      } catch (err) {
+        // [修改] 改進錯誤訊息
+        resultDiv.innerText = '網路錯誤，請檢查伺服器連線並稍後再試。';
+      }
+    }
+
+    function goHome() {
+      document.getElementById('followupInput').value = '';
+      document.getElementById('followupResult').style.display = 'none';
+      document.getElementById('followupResult').innerText = '';
+      switchPage('page1');
+    }
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93b594978b77e592',t:'MTc0NjUwNDEyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

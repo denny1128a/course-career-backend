@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coursify - 智慧選課與生涯建議</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Roboto:wght@400;500&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', 'Roboto', Arial, sans-serif;
+      background-color: #f4f7fa;
+      color: #34495e;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    /* 導航欄 */
+    .navbar {
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .navbar-brand img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .navbar-brand h1 {
+      font-size: 24px;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .navbar-links a, .navbar-links button {
+      font-size: 16px;
+      color: #3498db;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background-color 0.3s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .navbar-links button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+    }
+
+    .navbar-links a:hover, .navbar-links button:hover {
+      background-color: #e6f3ff;
+      transform: scale(1.05);
+    }
+
+    .navbar-links button:hover {
+      background-color: #c0392b;
+    }
+
+    /* 容器 */
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    /* 卡片 */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 表單樣式 */
+    label {
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: block;
+      color: #2c3e50;
+    }
+
+    select, textarea, input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      border: 1px solid #dfe6e9;
+      font-size: 16px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    select:focus, textarea:focus, input:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* 按鈕 */
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button.loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 課程表格 */
+    .course-table, .taken-courses-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+
+    .course-table th, .course-table td, .taken-courses-table th, .taken-courses-table td {
+      border: 1px solid #dfe6e9;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .course-table th, .taken-courses-table th {
+      background-color: #3498db;
+      color: white;
+      font-weight: 500;
+    }
+
+    .course-table tr:nth-child(even), .taken-courses-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .course-table tr:hover, .taken-courses-table tr:hover {
+      background-color: #e6f3ff;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .edit-btn {
+      background-color: #2ecc71;
+      color: white;
+      margin-right: 8px;
+    }
+
+    .edit-btn:hover {
+      background-color: #27ae60;
+    }
+
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    /* 回應與追問 */
+    .response-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .response-card, .followup-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .response-card {
+      border-left: 6px solid #2ecc71;
+    }
+
+    .followup-card {
+      border-left: 6px solid #f39c12;
+    }
+
+    .career-advice {
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #e6f3ff;
+      border-radius: 8px;
+    }
+
+    .career-advice h4 {
+      color: #1e88e5;
+      margin-top: 0;
+    }
+
+    /* 模態框 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 24px;
+      color: #34495e;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #e74c3c;
+    }
+
+    /* 歷史問題 */
+    .history-item {
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      border-left: 4px solid #3498db;
+    }
+
+    /* 學習地圖 */
+    .learning-map {
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #e6f3ff;
+      border-radius: 8px;
+      border-left: 4px solid #2ecc71;
+    }
+
+    /* 錯誤訊息 */
+    .error-msg, .success-msg {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .error-msg {
+      background-color: #ffebee;
+      color: #c0392b;
+    }
+
+    .success-msg {
+      background-color: #e7f9e7;
+      color: #2ecc71;
+    }
+
+    /* 響應式 */
+    @media (max-width: 768px) {
+      .response-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .navbar {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .navbar-links {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .container {
+        padding: 0 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 導航欄 -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <img src="logo1.png" alt="Coursify Logo">
+      <h1>Coursify</h1>
+    </div>
+    <div class="navbar-links" id="navbarLinks">
+      <a href="#" onclick="switchPage('page1')">首頁</a>
+      <a href="#" id="profileLink" onclick="goToProfile()" style="display:none;">個人資料</a>
+      <a href="#" id="loginLink" onclick="openLoginModal()">登入</a>
+      <button id="logoutBtn" onclick="logout()" style="display:none;">登出</button>
+    </div>
+  </nav>
+
+  <!-- 容器 -->
+  <div class="container">
+    <!-- 登入模態框 -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeLoginModal()">×</span>
+        <h3>註冊 / 登入</h3>
+        <div class="auth-box">
+          <label for="authUsername">用戶名</label>
+          <input type="text" id="authUsername" placeholder="輸入您的用戶名">
+          <label for="authPassword">密碼</label>
+          <input type="password" id="authPassword" placeholder="輸入您的密碼">
+          <button onclick="register()">註冊</button>
+          <button onclick="login()">登入</button>
+          <p id="authError" class="error-msg" style="display:none;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 首頁 -->
+    <div id="page1" class="page card visible">
+      <h3>選課與職涯諮詢</h3>
+      <label for="department">主修學系</label>
+      <select id="department">
+        <option value="">-- 請選擇 --</option>
+        <option value="中國文學系">中國文學系</option>
+        <option value="英美語文學系">英美語文學系</option>
+        <option value="法國語文學系">法國語文學系</option>
+        <option value="數學系">數學系</option>
+        <option value="物理學系">物理學系</option>
+        <option value="化學系">化學系</option>
+        <option value="光電科學與工程學系">光電科學與工程學系</option>
+        <option value="機械工程學系">機械工程學系</option>
+        <option value="土木工程學系">土木工程學系</option>
+        <option value="化學工程與材料工程學系">化學工程與材料工程學系</option>
+        <option value="電機工程學系">電機工程學系</option>
+        <option value="資訊工程學系">資訊工程學系</option>
+        <option value="地球科學學系">地球科學學系</option>
+        <option value="大氣科學學系">大氣科學學系</option>
+        <option value="企業管理學系">企業管理學系</option>
+        <option value="資訊管理學系">資訊管理學系</option>
+        <option value="財務金融學系">財務金融學系</option>
+        <option value="客家語文暨社會科學學系">客家語文暨社會科學學系</option>
+        <option value="生物醫學工程學系">生物醫學工程學系</option>
+      </select>
+
+      <label for="grade">年級</label>
+      <select id="grade">
+        <option value="">-- 請選擇 --</option>
+        <option value="一年級">一年級</option>
+        <option value="二年級">二年級</option>
+        <option value="三年級">三年級</option>
+        <option value="四年級">四年級</option>
+        <option value="研究生">研究生</option>
+      </select>
+
+      <label for="takenCourses">已修課程</label>
+      <input type="text" id="takenCourses" placeholder="例如：程式設計 (113-2), 線性代數 (113-1)...">
+
+      <label for="studentQuestion">問題描述</label>
+      <textarea id="studentQuestion" placeholder="我想學資料分析，推薦哪些課程？"></textarea>
+
+      <button id="submitBtn" onclick="submitInitial()">送出問題</button>
+      <button id="saveBtn" onclick="saveUserData()" style="display:none;">儲存資料</button>
+      <p id="errorMsg" class="error-msg" style="display:none;"></p>
+    </div>
+
+    <!-- 回應頁 -->
+    <div id="page2" class="page">
+      <div class="response-grid">
+        <div class="response-card">
+          <h3>AI 建議回覆</h3>
+          <p><strong>您的輸入：</strong></p>
+          <p id="userSummary"></p>
+          <div id="aiAdvice" class="loading-text">載入中...</div>
+        </div>
+        <div class="followup-card">
+          <h3>追問</h3>
+          <label for="followupInput">有其他問題？</label>
+          <textarea id="followupInput" placeholder="例如：這些課程的先修要求是什麼？"></textarea>
+          <button id="followupBtn" onclick="sendFollowup()">提交追問</button>
+          <div id="followupResult" style="display:none;"></div>
+        </div>
+      </div>
+      <button onclick="goHome()">回到首頁</button>
+    </div>
+
+    <!-- 個人資料 -->
+    <div id="page3" class="page">
+      <div class="card">
+        <h3>個人資料維護</h3>
+        <label for="profileDepartment">主修學系</label>
+        <select id="profileDepartment">
+          <option value="">-- 請選擇 --</option>
+          <option value="中國文學系">中國文學系</option>
+          <option value="英美語文學系">英美語文學系</option>
+          <option value="法國語文學系">法國語文學系</option>
+          <option value="數學系">數學系</option>
+          <option value="物理學系">物理學系</option>
+          <option value="化學系">化學系</option>
+          <option value="光電科學與工程學系">光電科學與工程學系</option>
+          <option value="機械工程學系">機械工程學系</option>
+          <option value="土木工程學系">土木工程學系</option>
+          <option value="化學工程與材料工程學系">化學工程與材料工程學系</option>
+          <option value="電機工程學系">電機工程學系</option>
+          <option value="資訊工程學系">資訊工程學系</option>
+          <option value="地球科學學系">地球科學學系</option>
+          <option value="大氣科學學系">大氣科學學系</option>
+          <option value="企業管理學系">企業管理學系</option>
+          <option value="資訊管理學系">資訊管理學系</option>
+          <option value="財務金融學系">財務金融學系</option>
+          <option value="客家語文暨社會科學學系">客家語文暨社會科學學系</option>
+          <option value="生物醫學工程學系">生物醫學工程學系</option>
+        </select>
+
+        <label for="profileGrade">年級</label>
+        <select id="profileGrade">
+          <option value="">-- 請選擇 --</option>
+          <option value="一年級">一年級</option>
+          <option value="二年級">二年級</option>
+          <option value="三年級">三年級</option>
+          <option value="四年級">四年級</option>
+          <option value="研究生">研究生</option>
+        </select>
+
+        <label for="profileTakenCourses">新增/編輯課程（格式：課程名稱 (學期)）</label>
+        <input type="text" id="profileTakenCourses" placeholder="例如：程式設計 (113-2), 線性代數 (113-1)...">
+
+        <button onclick="saveProfile()">儲存資料</button>
+        <p id="profileError" class="error-msg" style="display:none;"></p>
+        <p id="profileSuccess" class="success-msg" style="display:none;"></p>
+      </div>
+
+      <div class="card">
+        <h3>已修課程</h3>
+        <table class="taken-courses-table" id="takenCoursesTable">
+          <thead>
+            <tr>
+              <th>課程名稱</th>
+              <th>學期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="takenCoursesList"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>歷史問題</h3>
+        <div id="historyList" class="loading-text">載入中...</div>
+      </div>
+
+      <div class="card">
+        <h3>個人學習地圖</h3>
+        <div id="learningMap" class="learning-map"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let originalQuestion = '';
+    let originalAnswer = '';
+    let isLoggedIn = false;
+
+    // 顯示錯誤/成功訊息
+    function showMessage(elementId, message, isSuccess = false) {
+      const element = document.getElementById(elementId);
+      element.innerText = message;
+      element.className = isSuccess ? 'success-msg' : 'error-msg';
+      element.style.display = 'block';
+      setTimeout(() => element.style.display = 'none', 3000);
+    }
+
+    // 驗證課程格式
+    function validateCourses(courses) {
+      if (!courses) return true;
+      const courseArray = courses.split(',').map(c => c.trim()).filter(c => c);
+      return courseArray.every(course => {
+        const match = course.match(/(.+)\s*\((.+)\)/);
+        return match && match[1].trim() && match[2].trim();
+      });
+    }
+
+    // 檢查問題相關性
+    function isQuestionRelevant(question) {
+      const keywords = [
+        '課程', '選課', '課', '學', '學習', '修', '職涯', '職業', '工作', 
+        '規劃', '建議', '推薦', '分析', '程式', '資料', '數據', '工程', 
+        '管理', '設計', '技能', '實習', '面試', '準備'
+      ];
+      return keywords.some(keyword => question.toLowerCase().includes(keyword));
+    }
+
+    // 模態框控制
+    function openLoginModal() {
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('authUsername').value = '';
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authError').style.display = 'none';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      if (event.target === document.getElementById('loginModal')) {
+        closeLoginModal();
+      }
+    };
+
+    // 檢查登入狀態
+    async function checkLoginStatus() {
+      try {
+        const res = await fetch('http://localhost:3000/user', { 
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+        console.log('登入狀態:', data);
+
+        const loginLink = document.getElementById('loginLink');
+        const profileLink = document.getElementById('profileLink');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const saveBtn = document.getElementById('saveBtn');
+
+        if (data.user_id && data.username) {
+          isLoggedIn = true;
+          loginLink.style.display = 'none';
+          profileLink.style.display = 'block';
+          logoutBtn.style.display = 'block';
+          saveBtn.style.display = 'block';
+          document.getElementById('department').value = data.department || '';
+          document.getElementById('grade').value = data.grade || '';
+          document.getElementById('takenCourses').value = data.takenCourses || '';
+          console.log(`✅ 用戶已登入: ${data.username}`);
+        } else {
+          isLoggedIn = false;
+          loginLink.style.display = 'block';
+          profileLink.style.display = 'none';
+          logoutBtn.style.display = 'none';
+          saveBtn.style.display = 'none';
+          console.log('⚠️ 未登入');
+        }
+      } catch (err) {
+        console.error('❌ 檢查登入狀態失敗:', err.message);
+        showMessage('authError', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      }
+    }
+
+    // 註冊
+    async function register() {
+      const username = document.getElementById('authUsername').value;
+      const password = document.getElementById('authPassword').value;
+      const registerBtn = document.querySelector('#loginModal button[onclick="register()"]');
+      
+      registerBtn.disabled = true;
+      registerBtn.classList.add('loading');
+
+      if (!username || !password) {
+        showMessage('authError', '請填寫用戶名和密碼');
+        registerBtn.disabled = false;
+        registerBtn.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showMessage('authError', data.error || '註冊失敗，請稍後再試');
+        } else {
+          showMessage('authError', '註冊成功，請登入', true);
+        }
+      } catch (err) {
+        console.error('❌ 註冊錯誤:', err.message);
+        showMessage('authError', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.classList.remove('loading');
+      }
+    }
+
+    // 登入
+    async function login() {
+      const username = document.getElementById('authUsername').value;
+      const password = document.getElementById('authPassword').value;
+      const loginBtn = document.querySelector('#loginModal button[onclick="login()"]');
+      
+      loginBtn.disabled = true;
+      loginBtn.classList.add('loading');
+
+      if (!username || !password) {
+        showMessage('authError', '請填寫用戶名和密碼');
+        loginBtn.disabled = false;
+        loginBtn.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showMessage('authError', data.error || '登入失敗，請檢查用戶名或密碼');
+        } else {
+          closeLoginModal();
+          await checkLoginStatus();
+          showMessage('authError', '登入成功！', true);
+        }
+      } catch (err) {
+        console.error('❌ 登入錯誤:', err.message);
+        showMessage('authError', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.classList.remove('loading');
+      }
+    }
+
+    // 登出
+    async function logout() {
+      try {
+        const res = await fetch('http://localhost:3000/logout', { 
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        console.log('登出回應:', await res.json());
+        await checkLoginStatus();
+        switchPage('page1');
+      } catch (err) {
+        console.error('❌ 登出失敗:', err.message);
+        showMessage('authError', '登出失敗，請稍後再試');
+      }
+    }
+
+    // 儲存首頁資料
+    async function saveUserData() {
+      const saveBtn = document.getElementById('saveBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      saveBtn.disabled = true;
+      saveBtn.classList.add('loading');
+
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+
+      if (!dept || !grade) {
+        showMessage('errorMsg', '請填寫學系和年級！');
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
+        return;
+      }
+
+      if (!validateCourses(taken)) {
+        showMessage('errorMsg', '課程格式錯誤，請使用：課程名稱 (學期)');
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/save-user-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ department: dept, grade: grade, takenCourses: taken })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showMessage('errorMsg', data.error || '儲存資料失敗');
+        } else {
+          showMessage('errorMsg', '資料已儲存！', true);
+        }
+      } catch (err) {
+        console.error('❌ 儲存資料錯誤:', err.message);
+        showMessage('errorMsg', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
+      }
+    }
+
+    // 儲存個人資料
+    async function saveProfile() {
+      const saveBtn = document.querySelector('#page3 button[onclick="saveProfile()"]');
+      saveBtn.disabled = true;
+      saveBtn.classList.add('loading');
+
+      const dept = document.getElementById('profileDepartment').value;
+      const grade = document.getElementById('profileGrade').value;
+      const taken = document.getElementById('profileTakenCourses').value;
+
+      if (!dept || !grade) {
+        showMessage('profileError', '請填寫學系和年級！');
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
+        return;
+      }
+
+      if (!validateCourses(taken)) {
+        showMessage('profileError', '課程格式錯誤，請使用：課程名稱 (學期)');
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/save-user-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ department: dept, grade: grade, takenCourses: taken })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showMessage('profileError', data.error || '儲存資料失敗');
+        } else {
+          showMessage('profileSuccess', '資料已儲存！', true);
+          document.getElementById('department').value = dept;
+          document.getElementById('grade').value = grade;
+          document.getElementById('takenCourses').value = taken;
+          await loadTakenCoursesList();
+          await loadLearningMap();
+        }
+      } catch (err) {
+        console.error('❌ 儲存資料錯誤:', err.message);
+        showMessage('profileError', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('loading');
+      }
+    }
+
+    // 載入已修課程
+    async function loadTakenCoursesList() {
+      const takenCoursesList = document.getElementById('takenCoursesList');
+      takenCoursesList.innerHTML = '<tr><td colspan="3" class="loading-text">載入中...</td></tr>';
+
+      try {
+        const res = await fetch('http://localhost:3000/user', {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          takenCoursesList.innerHTML = `<tr><td colspan="3" style="color:red;">${data.error || '載入課程失敗'}</td></tr>`;
+          return;
+        }
+
+        const courses = data.takenCourses ? data.takenCourses.split(',').map(c => c.trim()).filter(c => c) : [];
+        if (courses.length === 0) {
+          takenCoursesList.innerHTML = '<tr><td colspan="3">尚未記錄已修課程</td></tr>';
+          return;
+        }
+
+        takenCoursesList.innerHTML = courses.map(course => {
+          const match = course.match(/(.+)\s*\((.+)\)/);
+          const courseName = match ? match[1].trim() : course;
+          const semester = match ? match[2].trim() : '未知';
+          return `
+            <tr>
+              <td>${courseName}</td>
+              <td>${semester}</td>
+              <td>
+                <button class="action-btn edit-btn" onclick="editCourse('${encodeURIComponent(courseName)}', '${encodeURIComponent(semester)}')">編輯</button>
+                <button class="action-btn delete-btn" onclick="deleteCourse('${encodeURIComponent(courseName)}', '${encodeURIComponent(semester)}')">刪除</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('❌ 載入課程錯誤:', err.message);
+        takenCoursesList.innerHTML = '<tr><td colspan="3" style="color:red;">無法連接到伺服器，請確認後端運行並使用 http://localhost:8080</td></tr>';
+      }
+    }
+
+    // 編輯課程
+    function editCourse(encodedCourseName, encodedSemester) {
+      const courseName = decodeURIComponent(encodedCourseName);
+      const semester = decodeURIComponent(encodedSemester);
+      const profileTakenCourses = document.getElementById('profileTakenCourses');
+      const currentCourses = profileTakenCourses.value.split(',').map(c => c.trim()).filter(c => c);
+      const courseIndex = currentCourses.findIndex(c => c.includes(`${courseName} (${semester})`));
+      
+      if (courseIndex !== -1) {
+        currentCourses[courseIndex] = `${courseName} (${semester})`;
+        profileTakenCourses.value = currentCourses.join(', ');
+        profileTakenCourses.focus();
+      }
+    }
+
+    // 刪除課程
+    async function deleteCourse(encodedCourseName, encodedSemester) {
+      const courseName = decodeURIComponent(encodedCourseName);
+      const semester = decodeURIComponent(encodedSemester);
+
+      try {
+        const res = await fetch('http://localhost:3000/delete-course', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ courseName, semester })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showMessage('profileError', data.error || '刪除課程失敗');
+        } else {
+          showMessage('profileSuccess', '課程已刪除！', true);
+          await loadTakenCoursesList();
+          await loadLearningMap();
+          const currentCourses = document.getElementById('profileTakenCourses').value
+            .split(',')
+            .map(c => c.trim())
+            .filter(c => c && !c.includes(`${courseName} (${semester})`))
+            .join(', ');
+          document.getElementById('profileTakenCourses').value = currentCourses;
+          document.getElementById('takenCourses').value = currentCourses;
+        }
+      } catch (err) {
+        console.error('❌ 刪除課程錯誤:', err.message);
+        showMessage('profileError', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      }
+    }
+
+    // 載入歷史問題
+    async function loadHistory() {
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = '<div class="loading-text">載入中...</div>';
+
+      try {
+        const res = await fetch('http://localhost:3000/history', {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          historyList.innerHTML = `<p style="color:red;">${data.error || '載入歷史問題失敗'}</p>`;
+          return;
+        }
+
+        if (data.length === 0) {
+          historyList.innerHTML = '<p>尚無歷史問題記錄。</p>';
+          return;
+        }
+
+        historyList.innerHTML = data.map(item => {
+          let responseContent = '無回應內容';
+          try {
+            const response = JSON.parse(item.response);
+            responseContent = Array.isArray(response.advice.content)
+              ? `<ul>${response.advice.content.map(c => `<li>${c}</li>`).join('')}</ul>`
+              : `<p>${response.advice.content}</p>`;
+          } catch (e) {
+            console.error('❌ 解析歷史回應失敗:', e);
+          }
+          return `
+            <div class="history-item">
+              <p><strong>問題：</strong> ${item.question}</p>
+              <p><strong>時間：</strong> ${new Date(item.timestamp).toLocaleString('zh-TW')}</p>
+              <p><strong>回應：</strong> ${responseContent}</p>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('❌ 載入歷史問題錯誤:', err.message);
+        historyList.innerHTML = '<p style="color:red;">無法連接到伺服器，請確認後端運行並使用 http://localhost:8080</p>';
+      }
+    }
+
+    // 載入學習地圖
+    async function loadLearningMap() {
+      const learningMap = document.getElementById('learningMap');
+      learningMap.innerHTML = '<div class="loading-text">載入中...</div>';
+
+      try {
+        const res = await fetch('http://localhost:3000/user', { 
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          learningMap.innerHTML = `<p style="color:red;">${data.error || '載入學習地圖失敗'}</p>`;
+          return;
+        }
+
+        const courses = data.takenCourses ? data.takenCourses.split(',').map(c => c.trim()).filter(c => c) : [];
+        learningMap.innerHTML = `
+          <p><strong>已修課程：</strong></p>
+          ${courses.length > 0 
+            ? `<ul>${courses.map(c => `<li>${c}</li>`).join('')}</ul>`
+            : '<p>尚未記錄已修課程。</p>'}
+          <p>（未來可視化為課程進度圖）</p>
+        `;
+      } catch (err) {
+        console.error('❌ 載入學習地圖錯誤:', err.message);
+        learningMap.innerHTML = '<p style="color:red;">無法連接到伺服器，請確認後端運行並使用 http://localhost:8080</p>';
+      }
+    }
+
+    // 切換頁面
+    function switchPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('visible'));
+      document.getElementById(pageId).classList.add('visible');
+    }
+
+    // 進入個人資料頁
+    async function goToProfile() {
+      switchPage('page3');
+      try {
+        const userData = await (await fetch('http://localhost:3000/user', { 
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        })).json();
+        document.getElementById('profileDepartment').value = userData.department || '';
+        document.getElementById('profileGrade').value = userData.grade || '';
+        document.getElementById('profileTakenCourses').value = userData.takenCourses || '';
+        await loadTakenCoursesList();
+        await loadHistory();
+        await loadLearningMap();
+      } catch (err) {
+        console.error('❌ 載入個人資料失敗:', err.message);
+        showMessage('profileError', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      }
+    }
+
+    // 提交初始問題
+    async function submitInitial() {
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+      const question = document.getElementById('studentQuestion').value;
+
+      if (!isQuestionRelevant(question)) {
+        showMessage('errorMsg', '請問與課程或職涯相關的問題');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: question,
+            isFollowup: false
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          showMessage('errorMsg', data.error || '無法處理問題，請稍後再試');
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+          return;
+        }
+
+        originalQuestion = question;
+        originalAnswer = JSON.stringify(data.response);
+
+        document.getElementById('userSummary').innerText =
+          `主修學系：${dept || '未提供'}\n年級：${grade || '未提供'}\n已修課程：${taken || '未提供'}\n問題：${question}`;
+        
+        document.getElementById('aiAdvice').innerHTML = `
+          <div class="career-advice">
+            <h4>${data.response.title || '職涯建議'}</h4>
+            ${Array.isArray(data.response.content) 
+              ? `<ul>${data.response.content.map(item => `<li>${item}</li>`).join('')}</ul>` 
+              : `<p>${data.response.content}</p>`}
+          </div>
+          ${data.courses?.length > 0 ? `
+            <h4>推薦課程</h4>
+            <table class="course-table">
+              <tr>
+                <th>課程名稱</th>
+                <th>課程內容</th>
+                <th>學分數</th>
+                <th>課程類型</th>
+                <th>推薦原因</th>
+              </tr>
+              ${data.courses.map(c => `
+                <tr>
+                  <td>${c.course_name}</td>
+                  <td>${c.description}</td>
+                  <td>${c.credits}</td>
+                  <td>${c.course_type}</td>
+                  <td>${c.reason}</td>
+                </tr>
+              `).join('')}
+            </table>
+          ` : ''}
+          ${data.message ? `<p>${data.message}</p>` : ''}
+        `;
+
+        switchPage('page2');
+      } catch (err) {
+        console.error('❌ 提交問題錯誤:', err.message);
+        showMessage('errorMsg', '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+      }
+    }
+
+    // 提交追問
+    async function sendFollowup() {
+      const followupBtn = document.getElementById('followupBtn');
+      followupBtn.disabled = true;
+      followupBtn.classList.add('loading');
+
+      const followupInput = document.getElementById('followupInput').value;
+      const resultDiv = document.getElementById('followupResult');
+      resultDiv.style.display = 'block';
+      resultDiv.innerText = 'AI 思考中...';
+
+      if (!isQuestionRelevant(followupInput)) {
+        resultDiv.innerText = '請問與課程或職涯相關的問題';
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+        return;
+      }
+
+      if (!originalAnswer) {
+        resultDiv.innerText = '請先提交初始問題，再進行追問！';
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+        return;
+      }
+
+      if (!followupInput) {
+        resultDiv.innerText = '請輸入追問內容！';
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+        return;
+      }
+
+      const dept = document.getElementById('department').value;
+      const grade = document.getElementById('grade').value;
+      const taken = document.getElementById('takenCourses').value;
+
+      try {
+        const res = await fetch('http://localhost:3000/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            department: dept,
+            grade: grade,
+            takenCourses: taken,
+            question: originalQuestion,
+            followupQuestion: followupInput,
+            previousAnswer: originalAnswer,
+            isFollowup: true
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          resultDiv.innerText = data.error || '發生錯誤，請稍後再試。';
+          followupBtn.disabled = false;
+          followupBtn.classList.remove('loading');
+          return;
+        }
+
+        resultDiv.innerHTML = `
+          <div class="career-advice">
+            <h4>${data.followupResult.title || '追問回應'}</h4>
+            ${Array.isArray(data.followupResult.content) 
+              ? `<ul>${data.followupResult.content.map(item => `<li>${item}</li>`).join('')}</ul>` 
+              : `<p>${data.followupResult.content}</p>`}
+          </div>
+        `;
+      } catch (err) {
+        console.error('❌ 提交追問錯誤:', err.message);
+        resultDiv.innerText = '無法連接到伺服器，請確認後端運行並使用 http://localhost:8080';
+      } finally {
+        followupBtn.disabled = false;
+        followupBtn.classList.remove('loading');
+      }
+    }
+
+    // 返回首頁
+    function goHome() {
+      document.getElementById('followupInput').value = '';
+      document.getElementById('followupResult').style.display = 'none';
+      document.getElementById('followupResult').innerText = '';
+      switchPage('page1');
+      checkLoginStatus();
+    }
+
+    window.onload = checkLoginStatus;
+  </script>
+</body>
+</html>
